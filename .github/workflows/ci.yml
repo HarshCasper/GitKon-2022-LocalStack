@@ -1,0 +1,35 @@
+name: LocalStack Lambda Function URLs
+
+on: push
+
+jobs:
+  localstack-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Start LocalStack
+        run: |
+          pip install --upgrade pyopenssl
+          pip install localstack
+          docker pull localstack/localstack
+          localstack start -d
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.2.8
+
+      - name: Zip the Lambda function 
+        run: |
+          sudo npm i -g zip
+          zip function.zip index.js
+      
+      - name: Terraform deploy
+        id: deploy
+        run: |
+          terraform init 
+          terraform apply --auto-approve
